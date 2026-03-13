@@ -2,6 +2,7 @@ package com.banco.banking.api.controller;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.banco.banking.api.dto.UsuarioDTO;
 import com.banco.banking.api.model.Cliente;
 import com.banco.banking.api.repository.ClienteRepository;
 
@@ -36,6 +38,24 @@ public class ClienteController {
         return repo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/listado-creacion")
+    public ResponseEntity<List<UsuarioDTO>> obtenerListadoCreacion() {
+        
+        List<Cliente> clientes = repo.findAll();
+
+        List<UsuarioDTO> listado = clientes.stream().map(c -> 
+            new UsuarioDTO(
+                c.getNombre()+" "+c.getApellido(),
+                c.getDireccion(),
+                c.getTelefono(),
+                c.getPassword(),
+                c.isEstado()
+            )
+        ).collect(Collectors.toList());
+
+        return ResponseEntity.ok(listado);
+    }
+    
     // POST: Crear nuevo
     @PostMapping
     public Cliente create(@RequestBody Cliente cliente) { return repo.save(cliente); }
