@@ -6,25 +6,22 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
-@NoArgsConstructor  // <--- Esto crea el constructor public Cliente() {}
-@AllArgsConstructor // <--- Esto crea el constructor con todos los campos
 @Data
-public class Cliente {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String nombre;
-    private String apellido;
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class Cliente extends Persona {
+    
     private String email;
+    private String password;
+    private boolean estado;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL)
     @JsonManagedReference

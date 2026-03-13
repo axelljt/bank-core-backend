@@ -5,10 +5,10 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,20 +28,24 @@ public class CuentaController {
     @GetMapping
     public List<Cuenta> getAll() { return cuentaRepo.findAll(); }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Cuenta> getById(@PathVariable Long id) {
-        return cuentaRepo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-    }
-
-    // POST: Crear cuenta asociada a un cliente
     @PostMapping("/cliente/{clienteId}")
-    public ResponseEntity<Cuenta> create(@PathVariable Long clienteId, @RequestBody Cuenta nuevaCuenta) {
+    public ResponseEntity<Cuenta> create(@PathVariable Long clienteId, @RequestBody Cuenta cuenta) {
         return clienteRepo.findById(clienteId).map(cliente -> {
-            nuevaCuenta.setCliente(cliente);
-            return ResponseEntity.ok(cuentaRepo.save(nuevaCuenta));
+            cuenta.setCliente(cliente);
+            // Si el JSON no trae estado, lo ponemos en true por defecto
+            if (!cuenta.isEstado()) cuenta.setEstado(true); 
+            return ResponseEntity.ok(cuentaRepo.save(cuenta));
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { cuentaRepo.deleteById(id); }
+    @PutMapping("/{id}")
+    public ResponseEntity<Cuenta> update(@PathVariable Long id, @RequestBody Cuenta nueva) {
+        return cuentaRepo.findById(id).map(c -> {
+            c.setNumeroCuenta(nueva.getNumeroCuenta());
+            c.setTipoCuenta(nueva.getTipoCuenta());
+            c.setSaldo(nueva.getSaldo());
+            c.setEstado(nueva.isEstado()); // <-- Ahora actualizamos el estado
+            return ResponseEntity.ok(cuentaRepo.save(c));
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }

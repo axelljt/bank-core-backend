@@ -13,8 +13,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@NoArgsConstructor  // <--- Esto crea el constructor public Cliente() {}
-@AllArgsConstructor // <--- Esto crea el constructor con todos los campos
+@NoArgsConstructor 
+@AllArgsConstructor 
 @Data
 public class Cuenta {
 	
@@ -24,6 +24,7 @@ public class Cuenta {
     private String numeroCuenta;
     private Double saldo;
     private String tipoCuenta;
+    private boolean estado;
 
     @ManyToOne
     @JoinColumn(name = "cliente_id")
