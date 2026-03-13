@@ -21,6 +21,8 @@ import com.banco.banking.api.dto.UsuarioDTO;
 import com.banco.banking.api.model.Cliente;
 import com.banco.banking.api.repository.ClienteRepository;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/clientes")
 @CrossOrigin(origins = "*")
@@ -49,7 +51,7 @@ public class ClienteController {
                 c.getDireccion(),
                 c.getTelefono(),
                 c.getPassword(),
-                c.isEstado()
+                c.getEstado()
             )
         ).collect(Collectors.toList());
 
@@ -58,11 +60,11 @@ public class ClienteController {
     
     // POST: Crear nuevo
     @PostMapping
-    public Cliente create(@RequestBody Cliente cliente) { return repo.save(cliente); }
+    public Cliente create(@Valid @RequestBody Cliente cliente) { return repo.save(cliente); }
 
     // PUT: Actualizar completo
     @PutMapping("/{id}")
-    public Cliente update(@PathVariable Long id, @RequestBody Cliente nuevo) {
+    public Cliente update(@PathVariable Long id,@Valid @RequestBody Cliente nuevo) {
         return repo.findById(id).map(c -> {
             c.setNombre(nuevo.getNombre());
             c.setApellido(nuevo.getApellido());

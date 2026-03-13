@@ -26,6 +26,7 @@ import com.banco.banking.api.repository.CuentaRepository;
 import com.banco.banking.api.repository.MovimientoRepository;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/movimientos")
@@ -58,7 +59,7 @@ public class MovimientoController {
                 m.getCuenta().getNumeroCuenta(),
                 m.getCuenta().getTipoCuenta(),
                 saldoPrevio,
-                m.getCuenta().isEstado(),
+                m.getCuenta().getEstado(),
                 nombreCompleto
             );
         }).collect(Collectors.toList());
@@ -81,7 +82,7 @@ public class MovimientoController {
                 m.getCuenta().getNumeroCuenta(),
                 m.getCuenta().getTipoCuenta(),
                 saldoInicial,
-                m.getCuenta().isEstado(),
+                m.getCuenta().getEstado(),
                 //montoMovimiento
                 m.getTipo()
             );
@@ -117,11 +118,11 @@ public class MovimientoController {
     
     @PostMapping("/cuenta/{id}")
     @Transactional
-    public ResponseEntity<?> registrar(@PathVariable Long id, @RequestBody Movimiento mov) {
+    public ResponseEntity<?> registrar(@PathVariable Long id, @Valid @RequestBody Movimiento mov) {
         return cuentaRepo.findById(id).map(cuenta -> {
             
             // 1. Validar si la cuenta está activa (Regla extra de seguridad)
-            if (!cuenta.isEstado()) {
+            if (!cuenta.getEstado()) {
                 return ResponseEntity.badRequest().body("La cuenta está inactiva.");
             }
 

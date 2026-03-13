@@ -19,6 +19,8 @@ import com.banco.banking.api.model.Cuenta;
 import com.banco.banking.api.repository.ClienteRepository;
 import com.banco.banking.api.repository.CuentaRepository;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/cuentas")
 @CrossOrigin(origins = "*")
@@ -31,11 +33,11 @@ public class CuentaController {
     public List<Cuenta> getAll() { return cuentaRepo.findAll(); }
 
     @PostMapping("/cliente/{clienteId}")
-    public ResponseEntity<Cuenta> create(@PathVariable Long clienteId, @RequestBody Cuenta cuenta) {
+    public ResponseEntity<Cuenta> create(@PathVariable Long clienteId,@Valid @RequestBody Cuenta cuenta) {
         return clienteRepo.findById(clienteId).map(cliente -> {
             cuenta.setCliente(cliente);
             // Si el JSON no trae estado, lo ponemos en true por defecto
-            if (!cuenta.isEstado()) cuenta.setEstado(true); 
+            if (!cuenta.getEstado()) cuenta.setEstado(true); 
             return ResponseEntity.ok(cuentaRepo.save(cuenta));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -61,7 +63,7 @@ public class CuentaController {
                 cuentaGuardada.getNumeroCuenta(),
                 cuentaGuardada.getTipoCuenta(),
                 cuentaGuardada.getSaldo(), // En la creación, el saldo inicial es el saldo de apertura
-                cuentaGuardada.isEstado(),
+                cuentaGuardada.getEstado(),
                 cliente.getNombre() + " " + cliente.getApellido()
             );
 
@@ -71,12 +73,12 @@ public class CuentaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Cuenta> update(@PathVariable Long id, @RequestBody Cuenta nueva) {
+    public ResponseEntity<Cuenta> update(@PathVariable Long id, @Valid @RequestBody Cuenta nueva) {
         return cuentaRepo.findById(id).map(c -> {
             c.setNumeroCuenta(nueva.getNumeroCuenta());
             c.setTipoCuenta(nueva.getTipoCuenta());
             c.setSaldo(nueva.getSaldo());
-            c.setEstado(nueva.isEstado()); // <-- Ahora actualizamos el estado
+            c.setEstado(nueva.getEstado()); // <-- Ahora actualizamos el estado
             return ResponseEntity.ok(cuentaRepo.save(c));
         }).orElse(ResponseEntity.notFound().build());
     }

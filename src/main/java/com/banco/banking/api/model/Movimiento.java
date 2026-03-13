@@ -11,6 +11,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,14 +27,25 @@ public class Movimiento {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @JsonFormat(pattern = "dd-MM-yyyy")
+
+    @NotNull(message = "La fecha no puede ser nula")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime fecha;
-    private String tipo; // DEBITO, CREDITO
+
+    @NotBlank(message = "El tipo de movimiento (Retiro/Deposito) es obligatorio")
+    @Pattern(regexp = "^(Retiro|Deposito)$", message = "El tipo debe ser 'Retiro' o 'Deposito'")
+    private String tipo;
+
+    @NotNull(message = "El monto es obligatorio")
+    @Positive(message = "El monto debe ser un valor positivo")
     private Double monto;
+
+    @NotNull(message = "El saldo actual no puede ser nulo")
     private Double saldoActual;
 
     @ManyToOne
-    @JoinColumn(name = "cuenta_id")
+    @JoinColumn(name = "cuenta_id", nullable = false)
     @JsonBackReference
+    @NotNull(message = "El movimiento debe estar asociado a una cuenta")
     private Cuenta cuenta;
 }
