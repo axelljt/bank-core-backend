@@ -33,13 +33,23 @@ public class CuentaController {
     public List<Cuenta> getAll() { return cuentaRepo.findAll(); }
 
     @PostMapping("/cliente/{clienteId}")
-    public ResponseEntity<Cuenta> create(@PathVariable Long clienteId,@Valid @RequestBody Cuenta cuenta) {
+    public ResponseEntity<Cuenta> create(@PathVariable Long clienteId, @Valid @RequestBody Cuenta cuenta) {
+        System.out.println(">>> DEBUG: Intentando crear cuenta para cliente ID: " + clienteId);
+
         return clienteRepo.findById(clienteId).map(cliente -> {
+            System.out.println(">>> DEBUG: Cliente ENCONTRADO: " + cliente.getNombre());
             cuenta.setCliente(cliente);
-            // Si el JSON no trae estado, lo ponemos en true por defecto
-            if (!cuenta.getEstado()) cuenta.setEstado(true); 
-            return ResponseEntity.ok(cuentaRepo.save(cuenta));
-        }).orElse(ResponseEntity.notFound().build());
+            
+            if (cuenta.getEstado() == null) cuenta.setEstado(true);
+            
+            Cuenta guardada = cuentaRepo.save(cuenta);
+            System.out.println(">>> DEBUG: Cuenta GUARDADA con ID: " + guardada.getId());
+            return ResponseEntity.ok(guardada);
+            
+        }).orElseGet(() -> {
+            System.out.println(">>> DEBUG: ERROR - El cliente con ID " + clienteId + " NO EXISTE en el ClienteRepository");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        });
     }
     
     @PostMapping("/corriente/cliente/{clienteId}")
