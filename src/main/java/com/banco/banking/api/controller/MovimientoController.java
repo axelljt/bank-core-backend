@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,16 +21,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.banco.banking.api.dto.CuentaClienteDTO;
 import com.banco.banking.api.dto.EstadoCuentaDTO;
 import com.banco.banking.api.dto.ReporteMovimientoDTO;
+import com.banco.banking.api.enums.TipoMovimientoEnum;
 import com.banco.banking.api.exceptions.SaldoInsuficienteException;
 import com.banco.banking.api.model.Movimiento;
 import com.banco.banking.api.repository.CuentaRepository;
 import com.banco.banking.api.repository.MovimientoRepository;
+import com.banco.banking.api.utils.BancoMessages;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/movimientos")
+@CrossOrigin(origins = "http://localhost:4200")
 public class MovimientoController {
 
     @Autowired private MovimientoRepository movRepo;
@@ -121,26 +125,33 @@ public class MovimientoController {
     public ResponseEntity<?> registrar(@PathVariable Long id, @Valid @RequestBody Movimiento mov) {
         return cuentaRepo.findById(id).map(cuenta -> {
             
-            // 1. Validar si la cuenta está activa (Regla extra de seguridad)
+            // 1. Validación de estado
             if (!cuenta.getEstado()) {
-                return ResponseEntity.badRequest().body("La cuenta está inactiva.");
+                return ResponseEntity.badRequest().body(BancoMessages.CUENTA_INACTIVA);
             }
 
-            double nuevoSaldo = cuenta.getSaldo();
+            // 2. Convertir el String que viene del JSON a nuestro Enum
+            TipoMovimientoEnum tipo = TipoMovimientoEnum.valueOf(mov.getTipo().toUpperCase());
 
-            // 2. Lógica de Negocio según tus imágenes
-            if ("Retiro".equalsIgnoreCase(mov.getTipo())) {
+            // 3. Lógica para Retiros
+            if (tipo == TipoMovimientoEnum.RETIRO) {
+                // Regla: Saldo disponible
                 if (cuenta.getSaldo() < mov.getMonto()) {
-                    // Lanzamos la excepción si el saldo no alcanza
-                    throw new SaldoInsuficienteException("Saldo no disponible");
+                    throw new SaldoInsuficienteException(BancoMessages.SALDO_NO_DISPONIBLE);
                 }
-                nuevoSaldo -= mov.getMonto();
-            } 
-            else if ("Deposito".equalsIgnoreCase(mov.getTipo())) {
-                nuevoSaldo += mov.getMonto();
+
+                // Regla: Cupo Diario
+                Double totalHoy = movRepo.sumMontoByCuentaAndTipoAndFecha(
+                    id, tipo.getDescripcion(), LocalDate.now().atStartOfDay(), LocalDateTime.now());
+                
+                if (((totalHoy != null ? totalHoy : 0) + mov.getMonto()) > BancoMessages.LIMITE_DIARIO) {
+                    return ResponseEntity.badRequest().body(BancoMessages.CUPO_EXCEDIDO);
+                }
             }
 
-            // 3. Actualizar y Guardar
+            // 4. Actualización de saldo genérica (Suma o Resta según el Enum)
+            double nuevoSaldo = cuenta.getSaldo() + (mov.getMonto() * tipo.getFactor());
+            
             cuenta.setSaldo(nuevoSaldo);
             cuentaRepo.save(cuenta);
 

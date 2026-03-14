@@ -19,6 +19,15 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
     // Método extra: Buscar movimientos por tipo (DEBITO/CREDITO)
     List<Movimiento> findByTipo(String tipo);
     
+    @Query("SELECT SUM(m.monto) FROM Movimiento m WHERE m.cuenta.id = :cuentaId " +
+            "AND m.tipo = :tipo AND m.fecha BETWEEN :inicio AND :fin")
+     Double sumMontoByCuentaAndTipoAndFecha(
+         @Param("cuentaId") Long cuentaId, 
+         @Param("tipo") String tipo, 
+         @Param("inicio") LocalDateTime inicio, 
+         @Param("fin") LocalDateTime fin
+     );
+    
  // Busca movimientos de todas las cuentas pertenecientes a un cliente entre dos fechas
     @Query("SELECT m FROM Movimiento m WHERE m.cuenta.cliente.id = :clienteId " +
            "AND m.fecha BETWEEN :inicio AND :fin ORDER BY m.fecha DESC")

@@ -34,4 +34,11 @@ public class GlobalExceptionHandler {
         error.put("error", "Ya existe un registro con esos datos (DNI o Email duplicado)");
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
+    
+    @ExceptionHandler(SaldoInsuficienteException.class)
+    public ResponseEntity<Map<String, String>> handleSaldoInsuficiente(SaldoInsuficienteException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage()); // Aquí viajará "Saldo no disponible"
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
 }
