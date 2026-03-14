@@ -1,0 +1,26 @@
+services:
+  # Servicio de Base de Datos
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: banco_db
+      POSTGRES_USER: user_banco
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+
+  # Servicio del Backend
+  api:
+    build: .
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      # IMPORTANTE: Aquí 'db' es el nombre del servicio arriba
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/banco_db
+      SPRING_DATASOURCE_USERNAME: user_banco
+      SPRING_DATASOURCE_PASSWORD: password123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
