@@ -28,8 +28,7 @@ public class Movimiento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotNull(message = "La fecha no puede ser nula")
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDateTime fecha;
 
     @NotBlank(message = "El tipo de movimiento (Retiro/Deposito) es obligatorio")
@@ -40,12 +39,10 @@ public class Movimiento {
     @Positive(message = "El monto debe ser un valor positivo")
     private Double monto;
 
-    @NotNull(message = "El saldo actual no puede ser nulo")
     private Double saldoActual;
 
     @ManyToOne
     @JoinColumn(name = "cuenta_id", nullable = false)
     @JsonBackReference
-    @NotNull(message = "El movimiento debe estar asociado a una cuenta")
     private Cuenta cuenta;
 }
