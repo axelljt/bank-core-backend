@@ -51,18 +51,18 @@ CREATE TABLE movimiento (
 -- Nota: El ID del Cliente debe coincidir con el ID de su Persona
 INSERT INTO persona (id, nombre, apellido, genero, edad, identificacion, direccion, telefono, email) 
 VALUES (1, 'Jose', 'Lema', 'Masculino', 30, '123456789', 'Otavalo sn y principal', '098254785', 'jose.lema@mail.com');
-INSERT INTO cliente (id, cliente_id, password, estado) 
-VALUES (1, 'C001', '1234', TRUE);
+INSERT INTO cliente (id, password, estado) 
+VALUES (1, '1234', TRUE);
 
 INSERT INTO persona (id, nombre, apellido, genero, edad, identificacion, direccion, telefono, email) 
 VALUES (2, 'Marian', 'Arandi', 'Femenino', 28, '987654321', 'Amazonas y NN.UU.', '097548965', 'marian.arandi@mail.com');
-INSERT INTO cliente (id, cliente_id, password, estado) 
-VALUES (2, 'C002', '5678', TRUE);
+INSERT INTO cliente (id, password, estado) 
+VALUES (2,  '5678', TRUE);
 
 INSERT INTO persona (id, nombre, apellido, genero, edad, identificacion, direccion, telefono, email) 
 VALUES (3, 'Juan', 'Osorio', 'Masculino', 35, '456123789', '13 de Junio y Equinoccial', '098874587', 'juan.osorio@mail.com');
-INSERT INTO cliente (id, cliente_id, password, estado) 
-VALUES (3, 'C003', '1245', TRUE);
+INSERT INTO cliente (id, password, estado) 
+VALUES (3, '1245', TRUE);
 
 -- Cuentas
 INSERT INTO cuenta (id, numero_cuenta, tipo_cuenta, saldo_inicial, estado, cliente_id) 
