@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.banco.banking.api.dto.EstadoCuentaDTO;
 import com.banco.banking.api.dto.ReporteMovimientoDTO;
 import com.banco.banking.api.enums.TipoMovimientoEnum;
 import com.banco.banking.api.exceptions.SaldoInsuficienteException;
@@ -103,6 +104,23 @@ public class MovimientoService {
                 m.getSaldoActual() // Saldo Disponible
             );
         }).collect(Collectors.toList());
+    }
+    
+    public EstadoCuentaDTO generarReporte(Long cuentaId, Movimiento mov) {
+        Cuenta cuenta = cuentaRepo.findById(cuentaId).orElseThrow();
+        
+        // El saldo disponible es el saldo actual de la cuenta 
+        // (que ya debería haberse actualizado con la lógica del movimiento)
+        return new EstadoCuentaDTO(
+            LocalDate.now().toString(),
+            cuenta.getCliente().getNombre() + " " + cuenta.getCliente().getApellido(),
+            cuenta.getNumeroCuenta(),
+            cuenta.getTipoCuenta(), // "Corriente" o "Ahorros"
+            cuenta.getSaldo() - mov.getMonto(), // Saldo antes del movimiento
+            true,
+            mov.getMonto(),
+            cuenta.getSaldo() // Saldo después del movimiento
+        );
     }
     
     public String generarReporteBase64(List<ReporteMovimientoDTO> reporte) {

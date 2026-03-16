@@ -2,7 +2,6 @@ package com.banco.banking.api.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.banco.banking.api.dto.UsuarioDTO;
 import com.banco.banking.api.model.Cliente;
-import com.banco.banking.api.repository.ClienteRepository;
+import com.banco.banking.api.service.ClienteService;
 
 import jakarta.validation.Valid;
 
@@ -28,60 +27,44 @@ import jakarta.validation.Valid;
 @CrossOrigin(origins = "http://localhost:4200")
 public class ClienteController {
 
-    @Autowired private ClienteRepository repo;
+	@Autowired 
+    private ClienteService service;
 
-    // GET: Obtener todos
     @GetMapping
-    public List<Cliente> getAll() { return repo.findAll(); }
+    public List<Cliente> getAll() { 
+        return service.listarTodos(); 
+    }
 
-    // GET: Obtener uno por ID
     @GetMapping("/{id}")
     public ResponseEntity<Cliente> getById(@PathVariable Long id) {
-        return repo.findById(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return service.buscarPorId(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/listado-creacion")
     public ResponseEntity<List<UsuarioDTO>> obtenerListadoCreacion() {
-        
-        List<Cliente> clientes = repo.findAll();
-
-        List<UsuarioDTO> listado = clientes.stream().map(c -> 
-            new UsuarioDTO(
-                c.getNombre()+" "+c.getApellido(),
-                c.getDireccion(),
-                c.getTelefono(),
-                c.getPassword(),
-                c.getEstado()
-            )
-        ).collect(Collectors.toList());
-
-        return ResponseEntity.ok(listado);
+        return ResponseEntity.ok(service.obtenerListadoParaCreacion());
     }
-    
-    // POST: Crear nuevo
+
     @PostMapping
-    public Cliente create(@Valid @RequestBody Cliente cliente) { return repo.save(cliente); }
-
-    // PUT: Actualizar completo
-    @PutMapping("/{id}")
-    public Cliente update(@PathVariable Long id,@Valid @RequestBody Cliente nuevo) {
-        return repo.findById(id).map(c -> {
-            c.setNombre(nuevo.getNombre());
-            c.setApellido(nuevo.getApellido());
-            c.setEmail(nuevo.getEmail());
-            return repo.save(c);
-        }).orElseThrow();
+    public Cliente create(@Valid @RequestBody Cliente cliente) { 
+        return service.guardar(cliente); 
     }
 
-    // PATCH: Actualización parcial (Ej: solo el email)
+    @PutMapping("/{id}")
+    public Cliente update(@PathVariable Long id, @Valid @RequestBody Cliente nuevo) {
+        return service.actualizar(id, nuevo);
+    }
+
     @PatchMapping("/{id}")
     public Cliente patch(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        Cliente c = repo.findById(id).orElseThrow();
-        if(updates.containsKey("email")) c.setEmail((String) updates.get("email"));
-        return repo.save(c);
+        return service.actualizacionParcial(id, updates);
     }
 
-    // DELETE: Eliminar
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { repo.deleteById(id); }
+    public void delete(@PathVariable Long id) { 
+        service.eliminar(id); 
+    }
+
 }

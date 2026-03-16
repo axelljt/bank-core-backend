@@ -12,12 +12,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.banco.banking.api.dto.EstadoCuentaDTO;
 import com.banco.banking.api.dto.ReporteMovimientoDTO;
 import com.banco.banking.api.model.Movimiento;
 import com.banco.banking.api.service.MovimientoService;
@@ -34,15 +36,21 @@ public class MovimientoController {
      * Registro de un nuevo movimiento (Depósito o Retiro)
      * POST /movimientos?cuentaId=1
      */
-    @PostMapping
-    public ResponseEntity<Movimiento> crearMovimiento(
-            @RequestParam Long cuentaId, 
+    @PostMapping("/cuentas/{cuentaId}/movimientos")
+    public ResponseEntity<EstadoCuentaDTO> crearMovimiento(
+            @PathVariable Long cuentaId, 
             @RequestBody Movimiento movimiento) {
         
-        Movimiento nuevoMovimiento = movimientoService.registrarMovimiento(cuentaId, movimiento);
-        return new ResponseEntity<>(nuevoMovimiento, HttpStatus.CREATED);
+        // 1. Registramos el movimiento (esto actualiza el saldo en la DB)
+        Movimiento nuevo = movimientoService.registrarMovimiento(cuentaId, movimiento);
+        
+        // 2. Generamos la respuesta con el formato del JSON que pediste
+        EstadoCuentaDTO reporte = movimientoService.generarReporte(cuentaId, nuevo);
+        
+        return new ResponseEntity<>(reporte, HttpStatus.CREATED);
     }
 
+    
     /**
      * Generación de reporte de estado de cuenta
      * GET /movimientos/reporte?clienteId=1&inicio=01-03-2024&fin=31-03-2024
