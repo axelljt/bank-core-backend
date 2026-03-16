@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.banco.banking.api.dto.UsuarioDTO;
 import com.banco.banking.api.model.Cliente;
@@ -20,16 +21,19 @@ public class ClienteServiceImpl implements ClienteService {
     private ClienteRepository repo;
 
     @Override
+    @Transactional(readOnly = true)
     public List<Cliente> listarTodos() {
         return repo.findAll();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Cliente> buscarPorId(Long id) {
         return repo.findById(id);
     }
 
     @Override
+    @Transactional
     public List<UsuarioDTO> obtenerListadoParaCreacion() {
         return repo.findAll().stream().map(c -> 
             new UsuarioDTO(
@@ -43,11 +47,13 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional
     public Cliente guardar(Cliente cliente) {
         return repo.save(cliente);
     }
 
     @Override
+    @Transactional
     public Cliente actualizar(Long id, Cliente nuevo) {
         return repo.findById(id).map(c -> {
             c.setNombre(nuevo.getNombre());
@@ -58,6 +64,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional
     public Cliente actualizacionParcial(Long id, Map<String, Object> updates) {
         Cliente c = repo.findById(id).orElseThrow();
         if(updates.containsKey("email")) c.setEmail((String) updates.get("email"));
@@ -66,6 +73,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional
     public void eliminar(Long id) {
         repo.deleteById(id);
     }

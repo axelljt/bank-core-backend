@@ -1,12 +1,15 @@
 package com.banco.banking.api.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,80 +19,89 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.banco.banking.api.dto.CuentaClienteDTO;
 import com.banco.banking.api.model.Cuenta;
-import com.banco.banking.api.repository.ClienteRepository;
-import com.banco.banking.api.repository.CuentaRepository;
+import com.banco.banking.api.service.CuentaService;
 
 import jakarta.validation.Valid;
-
+/**
+ * Controlador REST para la gestión de Cuentas en el sistema bancario.
+ * Proporciona endpoints para realizar operaciones CRUD y consultas especializadas.
+ * @author Axell
+ * @version 1.0
+ */
 @RestController
 @RequestMapping("/api/cuentas")
 @CrossOrigin(origins = "http://localhost:4200")
 public class CuentaController {
 
-    @Autowired private CuentaRepository cuentaRepo;
-    @Autowired private ClienteRepository clienteRepo;
+	@Autowired private CuentaService service;
 
+    /**
+     * Obtiene todas las cuentas registradas.
+     * @return Lista de {@link Cuenta}.
+     */
     @GetMapping
-    public List<Cuenta> getAll() { return cuentaRepo.findAll(); }
+    public List<Cuenta> getAll() { 
+        return service.listarTodas(); 
+    }
 
+    /**
+     * Crea una cuenta genérica asociada a un cliente.
+     */
     @PostMapping("/cliente/{clienteId}")
     public ResponseEntity<Cuenta> create(@PathVariable Long clienteId, @Valid @RequestBody Cuenta cuenta) {
-        System.out.println(">>> DEBUG: Intentando crear cuenta para cliente ID: " + clienteId);
-
-        return clienteRepo.findById(clienteId).map(cliente -> {
-            System.out.println(">>> DEBUG: Cliente ENCONTRADO: " + cliente.getNombre());
-            cuenta.setCliente(cliente);
-            
-            if (cuenta.getEstado() == null) cuenta.setEstado(true);
-            
-            Cuenta guardada = cuentaRepo.save(cuenta);
-            System.out.println(">>> DEBUG: Cuenta GUARDADA con ID: " + guardada.getId());
-            return ResponseEntity.ok(guardada);
-            
-        }).orElseGet(() -> {
-            System.out.println(">>> DEBUG: ERROR - El cliente con ID " + clienteId + " NO EXISTE en el ClienteRepository");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        });
+        try {
+            return ResponseEntity.ok(service.crearCuenta(clienteId, cuenta));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
-    
+
+    /**
+     * Endpoint especializado para crear cuentas de tipo CORRIENTE.
+     */
     @PostMapping("/corriente/cliente/{clienteId}")
     public ResponseEntity<CuentaClienteDTO> crearCuentaCorriente(
             @PathVariable Long clienteId, 
             @RequestBody Cuenta nuevaCuenta) {
-
-        return clienteRepo.findById(clienteId).map(cliente -> {
-            // 1. Forzamos que sea cuenta Corriente y configuramos el cliente
-            nuevaCuenta.setTipoCuenta("Corriente");
-            nuevaCuenta.setCliente(cliente);
-            
-            // 2. Si el estado no viene en el JSON, la activamos por defecto
-            nuevaCuenta.setEstado(true); 
-
-            // 3. Guardamos en la base de datos
-            Cuenta cuentaGuardada = cuentaRepo.save(nuevaCuenta);
-
-            // 4. Mapeamos manualmente al DTO CuentaClienteDTO
-            CuentaClienteDTO dto = new CuentaClienteDTO(
-                cuentaGuardada.getNumeroCuenta(),
-                cuentaGuardada.getTipoCuenta(),
-                cuentaGuardada.getSaldo(), // En la creación, el saldo inicial es el saldo de apertura
-                cuentaGuardada.getEstado(),
-                cliente.getNombre() + " " + cliente.getApellido()
-            );
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(dto);
-            
-        }).orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(service.crearCuentaCorriente(clienteId, nuevaCuenta));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
+    /**
+     * Actualización total de una cuenta.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Cuenta> update(@PathVariable Long id, @Valid @RequestBody Cuenta nueva) {
-        return cuentaRepo.findById(id).map(c -> {
-            c.setNumeroCuenta(nueva.getNumeroCuenta());
-            c.setTipoCuenta(nueva.getTipoCuenta());
-            c.setSaldo(nueva.getSaldo());
-            c.setEstado(nueva.getEstado()); // <-- Ahora actualizamos el estado
-            return ResponseEntity.ok(cuentaRepo.save(c));
-        }).orElse(ResponseEntity.notFound().build());
+        try {
+            return ResponseEntity.ok(service.actualizar(id, nueva));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Actualización parcial de campos de la cuenta (PATCH).
+     * @param id ID de la cuenta.
+     * @param updates Mapa de campos a modificar.
+     */
+    @PatchMapping("/{id}")
+    public ResponseEntity<Cuenta> patch(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        try {
+            return ResponseEntity.ok(service.actualizacionParcial(id, updates));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Elimina una cuenta por su ID.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }
